@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Toolbox — Free Image Tools</title>
+  <meta name="description" content="Free browser-based image tools. No uploads, no sign-up, 100% private."/>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    .page-wrap { padding-top: 60px; min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Hero ── */
+    .hero { padding: 72px 32px 52px; max-width: 920px; margin: 0 auto; width: 100%; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 22px;
+    }
+    .hero-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+    h1.hero-title {
+      font-size: clamp(36px,6vw,66px); font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1.04; margin-bottom: 20px;
+    }
+    h1.hero-title em { font-style: normal; color: var(--accent); }
+    .hero-desc { font-size: 16px; color: var(--muted2); line-height: 1.7; max-width: 460px; margin-bottom: 28px; }
+    .hero-cta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 44px; }
+    .btn-hero-primary {
+      background: var(--accent); color: #0c0c0c; border: none;
+      padding: 12px 26px; border-radius: 8px; font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-hero-primary:hover { opacity: 0.85; transform: translateY(-2px); }
+    .btn-hero-ghost {
+      background: transparent; color: var(--pro);
+      border: 1px solid var(--pro-border); padding: 12px 26px; border-radius: 8px;
+      font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; text-decoration: none; transition: all 0.15s;
+    }
+    .btn-hero-ghost:hover { background: var(--pro-dim); }
+
+    /* ── Feature strip ── */
+    .feature-strip {
+      display: flex; gap: 0; flex-wrap: wrap;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      overflow: hidden; max-width: 520px;
+    }
+    .feature-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 10px 16px; font-size: 12px; color: var(--muted2);
+      border-right: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
+    }
+    .feature-pill:last-child { border-right: none; }
+    .feature-pill .dot-sm { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+
+    /* ── Tools Grid ── */
+    .tools-section { padding: 0 32px 56px; max-width: 920px; margin: 0 auto; width: 100%; flex: 1; }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+      margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+    .tool-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 26px 22px 20px;
+      display: flex; flex-direction: column; gap: 14px;
+      text-decoration: none; color: var(--text);
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+    }
+    .tool-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--accent-glow) 0%, transparent 55%);
+      opacity: 0; transition: opacity 0.22s; pointer-events: none;
+    }
+    .tool-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 14px 36px rgba(0,0,0,0.5), 0 0 0 1px var(--accent); }
+    .tool-card:hover::before { opacity: 1; }
+    .card-icon { font-size: 28px; line-height: 1; }
+    .card-body { flex: 1; }
+    .card-title { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 7px; }
+    .card-desc { font-size: 13px; color: var(--muted2); line-height: 1.6; }
+    .card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .card-tag { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; }
+    .tag-live { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,255,71,0.3); }
+    .card-arrow { font-size: 18px; color: var(--muted); transition: color 0.15s, transform 0.15s; }
+    .tool-card:hover .card-arrow { color: var(--accent); transform: translate(3px,-3px); }
+
+    /* Pro features listed on cards */
+    .card-pro-features {
+      display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;
+    }
+    .card-pro-tag {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      letter-spacing: 0.1em; color: var(--pro);
+      background: var(--pro-dim); border: 1px solid var(--pro-border);
+      padding: 2px 7px; border-radius: 3px;
+    }
+
+    /* ── Ad slot placeholder (below tools) ── */
+    #home-tools-ad { width: 100%; }
+
+    /* ── Pro Section ── */
+    .pro-section { padding: 0 32px 72px; max-width: 920px; margin: 0 auto; width: 100%; }
+    .pro-card {
+      background: var(--surface); border: 1px solid var(--pro-border);
+      border-radius: var(--radius); padding: 44px 38px;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 40px; align-items: center; position: relative; overflow: hidden;
+    }
+    .pro-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at top left, rgba(167,139,250,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .pro-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--pro-dim); border: 1px solid var(--pro-border);
+      color: var(--pro); font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+      padding: 4px 10px; border-radius: 4px; margin-bottom: 16px;
+    }
+    .pro-title { font-size: clamp(22px,3.5vw,30px); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 12px; }
+    .pro-title span { color: var(--pro); }
+    .pro-desc { font-size: 14px; color: var(--muted2); line-height: 1.7; margin-bottom: 22px; max-width: 420px; }
+    .pro-features { display: flex; flex-direction: column; gap: 9px; margin-bottom: 26px; }
+    .pro-feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted2); }
+    .pro-feature .check { color: var(--pro); flex-shrink: 0; }
+    .pro-feature strong { color: var(--text); }
+    .pro-pricing {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 5px; text-align: center; flex-shrink: 0;
+    }
+    .pro-price { font-size: 44px; font-weight: 800; color: var(--pro); letter-spacing: -0.03em; line-height: 1; }
+    .pro-price sup { font-size: 18px; vertical-align: super; }
+    .pro-period { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .pro-yearly { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted2); }
+    .pro-yearly span { color: var(--green); }
+    .btn-pro-buy {
+      background: var(--pro); color: #0c0c0c; border: none;
+      padding: 12px 26px; border-radius: 8px; font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none;
+      transition: all 0.15s; display: block; width: 100%; text-align: center; margin-top: 8px;
+    }
+    .btn-pro-buy:hover { opacity: 0.85; transform: translateY(-2px); }
+    .pro-guarantee { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); text-align: center; }
+
+    /* ── Animations ── */
+    .hero { animation: fadeUp 0.5s ease both; }
+    .tool-card { animation: fadeUp 0.5s ease both; }
+    .tool-card:nth-child(1) { animation-delay: 0.05s; }
+    .tool-card:nth-child(2) { animation-delay: 0.10s; }
+    .tool-card:nth-child(3) { animation-delay: 0.15s; }
+    .pro-card { animation: fadeUp 0.5s ease 0.25s both; }
+
+    @media (max-width: 700px) {
+      .pro-card { grid-template-columns: 1fr; }
+      .pro-pricing { align-items: flex-start; text-align: left; }
+      .btn-pro-buy { width: auto; }
+      .hero { padding: 60px 20px 40px; }
+      .tools-section, .pro-section { padding-left: 20px; padding-right: 20px; }
+      .feature-strip { flex-direction: column; }
+      .feature-pill { border-right: none; border-bottom: 1px solid var(--border); }
+      .feature-pill:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <a class="nav-brand" href="index.html">
+    <span class="dot"></span>
+    <span class="name">Toolbox</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">Tools</a></li>
+    <li><a href="pro.html" class="nav-pro-btn"><span class="crown">✦</span> Get Pro</a></li>
+  </ul>
+</nav>
+
+<div class="page-wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="hero-eyebrow">Free · Fast · Private</p>
+    <h1 class="hero-title">Simple tools<br/>that just <em>work.</em></h1>
+    <p class="hero-desc">Resize, compress, and convert images — all in your browser. No server uploads, no account needed.</p>
+    <div class="hero-cta">
+      <a class="btn-hero-primary" href="#tools">Browse tools ↓</a>
+      <a class="btn-hero-ghost" href="pro.html">✦ Go Pro — Remove ads</a>
+    </div>
+    <div class="feature-strip">
+      <div class="feature-pill"><span class="dot-sm"></span>0 KB uploaded</div>
+      <div class="feature-pill"><span class="dot-sm"></span>No sign-up</div>
+      <div class="feature-pill"><span class="dot-sm"></span>Works offline</div>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section class="tools-section" id="tools">
+    <p class="section-label">All tools</p>
+    <div class="tools-grid">
+
+      <a class="tool-card" href="tools/image-resizer.html">
+        <div class="card-icon">🖼️</div>
+        <div class="card-body">
+          <p class="card-title">Image Resizer</p>
+          <p class="card-desc">Resize to exact pixel dimensions with aspect-ratio lock. Presets for social, HD, print & mobile.</p>
+          <div class="card-pro-features">
+            <span class="card-pro-tag">✦ Bulk resize</span>
+            <span class="card-pro-tag">✦ Fill color</span>
+            <span class="card-pro-tag">✦ Format convert</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag tag-live">Live</span>
+          <span class="card-arrow">↗</span>
+        </div>
+      </a>
+
+      <a class="tool-card" href="tools/image-compressor.html">
+        <div class="card-icon">🗜️</div>
+        <div class="card-body">
+          <p class="card-title">Image Compressor</p>
+          <p class="card-desc">Shrink file size with a live quality slider. Side-by-side preview. Export as JPEG, PNG or WEBP.</p>
+          <div class="card-pro-features">
+            <span class="card-pro-tag">✦ Bulk compress</span>
+            <span class="card-pro-tag">✦ AVIF output</span>
+            <span class="card-pro-tag">✦ Strip EXIF</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag tag-live">Live</span>
+          <span class="card-arrow">↗</span>
+        </div>
+      </a>
+
+      <a class="tool-card" href="tools/image-to-pdf.html">
+        <div class="card-icon">📄</div>
+        <div class="card-body">
+          <p class="card-title">Image → PDF</p>
+          <p class="card-desc">Convert one or multiple images into a single PDF. Set page size, orientation & margins.</p>
+          <div class="card-pro-features">
+            <span class="card-pro-tag">✦ PDF password</span>
+            <span class="card-pro-tag">✦ Page numbers</span>
+            <span class="card-pro-tag">✦ Custom filename</span>
+          </div>
+        </div>
+        <div class="card-footer">
+          <span class="card-tag tag-live">Live</span>
+          <span class="card-arrow">↗</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- AD: 1 ad below tools, only for free users -->
+  <div id="home-tools-ad"></div>
+
+  <!-- PRO SECTION -->
+  <section class="pro-section" id="pro">
+    <p class="section-label">Toolbox Pro</p>
+    <div class="pro-card">
+      <div>
+        <div class="pro-badge">✦ Pro Plan</div>
+        <h2 class="pro-title">More power.<br/><span>Zero interruptions.</span></h2>
+        <p class="pro-desc">Remove all ads forever and unlock Pro-only features — bulk processing, advanced export options, PDF passwords, and more. One payment, no subscription.</p>
+        <div class="pro-features">
+          <div class="pro-feature"><span class="check">✓</span> <span><strong>No ads</strong> on any tool, ever</span></div>
+          <div class="pro-feature"><span class="check">✓</span> <span><strong>Bulk compress & resize</strong> — process multiple images at once</span></div>
+          <div class="pro-feature"><span class="check">✓</span> <span><strong>PDF passwords</strong>, page numbers & custom filenames</span></div>
+          <div class="pro-feature"><span class="check">✓</span> <span><strong>AVIF format</strong> output + Strip EXIF metadata</span></div>
+          <div class="pro-feature"><span class="check">✓</span> <span><strong>One-time payment</strong> — not a subscription</span></div>
+        </div>
+        <a href="pro.html" class="btn-hero-ghost" style="display:inline-flex;align-items:center;gap:8px">See plans →</a>
+      </div>
+      <div class="pro-pricing">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-bottom:4px">FROM</div>
+        <div class="pro-price"><sup>$</sup>4<sup>.99</sup></div>
+        <div class="pro-period">/ month</div>
+        <div class="pro-yearly">or <span>$39/year</span> — save 35%</div>
+        <a href="pro.html" class="btn-pro-buy">Get Pro ✦</a>
+        <div class="pro-guarantee">7-day money-back guarantee</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p class="footer-copy">© 2025 Toolbox — built with <span>♥</span></p>
+    <p class="footer-copy">Client-side only. <span>Your files stay private.</span></p>
+  </footer>
+
+</div>
+
+<script src="scripts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    window.Toolbox.injectHomeAd();
+  });
+</script>
+</body>
+</html>
