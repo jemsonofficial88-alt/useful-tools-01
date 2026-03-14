@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Resizer — Toolbox</title>
+  <link rel="stylesheet" href="../styles.css"/>
+  <style>
+    body {
+      padding-top: 60px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Page Header ── */
+    .page-header {
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 36px 24px 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .page-header-left { display: flex; flex-direction: column; gap: 10px; }
+
+    .page-title {
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .page-title span { color: var(--accent); }
+
+    .page-subtitle {
+      font-size: 13px;
+      color: var(--muted2);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Main Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      width: 100%;
+      max-width: 860px;
+      margin: 24px auto 0;
+    }
+
+    /* ── Drop Zone ── */
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-sm);
+      margin: 24px;
+      padding: 56px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .drop-icon {
+      width: 56px; height: 56px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    #drop-zone:hover .drop-icon { border-color: var(--accent); transform: scale(1.05); }
+
+    .drop-title { font-size: 16px; font-weight: 700; }
+    .drop-sub {
+      font-size: 11px; color: var(--muted2);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.08em;
+    }
+
+    .drop-btn {
+      background: var(--accent); color: #0c0c0c;
+      border: none; padding: 10px 24px;
+      border-radius: 6px; font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .drop-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    #file-input { display: none; }
+
+    /* ── Workspace ── */
+    #workspace { display: none; }
+
+    .divider { height: 1px; background: var(--border); margin: 0 24px; }
+
+    /* ── Preview Row ── */
+    #preview-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 24px;
+    }
+
+    .preview-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted2);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .tag {
+      font-size: 9px; letter-spacing: 0.1em;
+      padding: 2px 7px; border-radius: 3px;
+    }
+
+    .tag-original { background: rgba(255,255,255,0.05); color: var(--muted2); }
+    .tag-output   { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(232,255,71,0.25); }
+
+    .preview-img-wrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 14px; min-height: 180px;
+      background:
+        linear-gradient(45deg, #1a1a1a 25%, transparent 25%) -10px 0,
+        linear-gradient(-45deg, #1a1a1a 25%, transparent 25%) -10px 0,
+        linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+      background-size: 20px 20px;
+      background-color: #111;
+    }
+
+    .preview-img-wrap img,
+    .preview-img-wrap canvas {
+      max-width: 100%; max-height: 200px;
+      object-fit: contain; border-radius: 4px;
+    }
+
+    .preview-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted2);
+      padding: 8px 14px 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .preview-meta strong { color: var(--text); }
+
+    /* ── Presets ── */
+    #presets-section {
+      padding: 0 24px 20px;
+    }
+
+    .presets-header {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .preset-groups {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preset-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .preset-group-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    .preset-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .preset-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 5px 11px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .preset-pill:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .preset-pill.active {
+      border-color: var(--accent);
+      color: #0c0c0c;
+      background: var(--accent);
+    }
+
+    /* ── Dimension Controls ── */
+    #controls {
+      padding: 0 24px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .controls-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    .dim-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .dim-group {
+      display: flex; flex-direction: column; gap: 6px;
+      flex: 1; min-width: 120px;
+    }
+
+    .dim-group label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--muted2);
+    }
+
+    .dim-group input[type="number"] {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px; font-weight: 500;
+      padding: 12px 14px; width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    .dim-group input::-webkit-inner-spin-button,
+    .dim-group input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .dim-group input:focus { border-color: var(--accent); }
+
+    .lock-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted2);
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; margin-top: 20px;
+      transition: all 0.2s; flex-shrink: 0; font-size: 16px;
+    }
+
+    .lock-btn.locked {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    /* ── Actions Bar ── */
+    #actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    #size-summary {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--muted2); line-height: 1.7;
+    }
+
+    #size-summary .arrow { color: var(--accent); margin: 0 5px; }
+    #size-summary .new-dim { color: var(--text); font-weight: 500; }
+
+    .btn-group { display: flex; gap: 8px; }
+
+    .btn {
+      padding: 10px 22px;
+      border-radius: 6px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: 13px;
+      letter-spacing: 0.02em;
+      cursor: pointer; border: none;
+      transition: all 0.15s;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+    }
+
+    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+    .btn-primary { background: var(--accent); color: #0c0c0c; }
+    .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary:active { transform: none; }
+    .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+    /* ── Footer ── */
+    .page-footer-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 560px) {
+      #preview-row { grid-template-columns: 1fr; }
+      .dim-row { flex-direction: column; }
+      .lock-btn { margin-top: 0; width: 100%; }
+      .page-header { padding: 24px 16px 0; }
+      .card { margin: 16px auto 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <a class="nav-brand" href="../index.html">
+    <span class="dot"></span>
+    <span class="name">Toolbox</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="../index.html">Tools</a></li>
+  </ul>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-header-left">
+    <a class="back-link" href="../index.html">← All tools</a>
+    <h1 class="page-title">Image <span>Resizer</span></h1>
+    <p class="page-subtitle">// resize to exact pixels · client-side only</p>
+  </div>
+</div>
+
+<!-- PRO BANNER -->
+<div class="pro-tool-banner"><div class="pro-tool-banner-inner"><div class="pro-banner-text"><span class="crown">✦</span><span>Enjoying the tools? <strong>Go Pro</strong> — remove all ads forever.</span></div><a href="../pro.html" class="pro-banner-btn">Get Pro</a></div></div>
+
+<!-- MAIN CARD -->
+<div class="card" style="margin: 24px auto 0; padding-bottom: 0;">
+
+  <!-- DROP ZONE -->
+  <div id="drop-zone">
+    <div class="drop-icon">🖼</div>
+    <p class="drop-title">Drop your image here</p>
+    <p class="drop-sub">PNG · JPG · WEBP · GIF · BMP</p>
+    <button class="drop-btn" onclick="document.getElementById('file-input').click()">Choose File</button>
+    <input type="file" id="file-input" accept="image/*"/>
+  </div>
+
+  <!-- WORKSPACE -->
+  <div id="workspace">
+
+    <!-- PREVIEWS -->
+    <div id="preview-row">
+      <div class="preview-box">
+        <div class="preview-label">Original <span class="tag tag-original">source</span></div>
+        <div class="preview-img-wrap"><img id="original-img" src="" alt="Original"/></div>
+        <div class="preview-meta" id="original-meta">—</div>
+      </div>
+      <div class="preview-box">
+        <div class="preview-label">Output <span class="tag tag-output">resized</span></div>
+        <div class="preview-img-wrap"><canvas id="output-canvas"></canvas></div>
+        <div class="preview-meta" id="output-meta">—</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- PRESETS -->
+    <div id="presets-section">
+      <p class="presets-header">// quick presets</p>
+      <div class="preset-groups">
+
+        <div class="preset-group">
+          <p class="preset-group-label">📱 Mobile</p>
+          <div class="preset-pills">
+            <button class="preset-pill" data-w="480"  data-h="854"  title="Low-end Android">480 × 854</button>
+            <button class="preset-pill" data-w="480"  data-h="960"  title="WVGA Android">480 × 960</button>
+            <button class="preset-pill" data-w="720"  data-h="1280" title="HD Android">720 × 1280</button>
+            <button class="preset-pill" data-w="720"  data-h="1560" title="HD+ Tall">720 × 1560</button>
+            <button class="preset-pill" data-w="720"  data-h="1600" title="HD+ Modern">720 × 1600</button>
+            <button class="preset-pill" data-w="1080" data-h="1920" title="FHD Android">1080 × 1920</button>
+            <button class="preset-pill" data-w="1080" data-h="2160" title="FHD+ 18:9">1080 × 2160</button>
+            <button class="preset-pill" data-w="1080" data-h="2340" title="FHD+ 19.5:9">1080 × 2340</button>
+            <button class="preset-pill" data-w="1080" data-h="2400" title="FHD+ 20:9">1080 × 2400</button>
+            <button class="preset-pill" data-w="390"  data-h="844"  title="iPhone 14 / 15">390 × 844</button>
+            <button class="preset-pill" data-w="430"  data-h="932"  title="iPhone 14/15 Pro Max">430 × 932</button>
+            <button class="preset-pill" data-w="360"  data-h="780"  title="Galaxy S series">360 × 780</button>
+          </div>
+        </div>
+
+        <div class="preset-group">
+          <p class="preset-group-label">📺 HD / Screen</p>
+          <div class="preset-pills">
+            <button class="preset-pill" data-w="1280" data-h="720">1280 × 720</button>
+            <button class="preset-pill" data-w="1920" data-h="1080">1920 × 1080</button>
+            <button class="preset-pill" data-w="2560" data-h="1440">2560 × 1440</button>
+            <button class="preset-pill" data-w="3840" data-h="2160">3840 × 2160</button>
+          </div>
+        </div>
+
+        <div class="preset-group">
+          <p class="preset-group-label">📣 Social Media</p>
+          <div class="preset-pills">
+            <button class="preset-pill" data-w="1080" data-h="1080" title="IG Square">1080 × 1080</button>
+            <button class="preset-pill" data-w="1080" data-h="1350" title="IG Portrait">1080 × 1350</button>
+            <button class="preset-pill" data-w="1080" data-h="1920" title="IG / TikTok Story">1080 × 1920</button>
+            <button class="preset-pill" data-w="1200" data-h="630"  title="FB / OG Link">1200 × 630</button>
+            <button class="preset-pill" data-w="1500" data-h="500"  title="X / Twitter Header">1500 × 500</button>
+            <button class="preset-pill" data-w="1280" data-h="720"  title="YouTube Thumbnail">1280 × 720</button>
+          </div>
+        </div>
+
+        <div class="preset-group">
+          <p class="preset-group-label">🖨 Print (300 dpi)</p>
+          <div class="preset-pills">
+            <button class="preset-pill" data-w="2480" data-h="3508">A4 Portrait</button>
+            <button class="preset-pill" data-w="3508" data-h="2480">A4 Landscape</button>
+            <button class="preset-pill" data-w="2550" data-h="3300">Letter</button>
+          </div>
+        </div>
+
+        <div class="preset-group">
+          <p class="preset-group-label">🖼 Thumbnail</p>
+          <div class="preset-pills">
+            <button class="preset-pill" data-w="150"  data-h="150">150 × 150</button>
+            <button class="preset-pill" data-w="300"  data-h="300">300 × 300</button>
+            <button class="preset-pill" data-w="800"  data-h="600">800 × 600</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- DIMENSION INPUTS -->
+    <div id="controls">
+      <p class="controls-title">// custom dimensions (px)</p>
+      <div class="dim-row">
+        <div class="dim-group">
+          <label>Width</label>
+          <input type="number" id="inp-w" min="1" max="20000" placeholder="—"/>
+        </div>
+        <button class="lock-btn locked" id="lock-btn" title="Lock aspect ratio">🔒</button>
+        <div class="dim-group">
+          <label>Height</label>
+          <input type="number" id="inp-h" min="1" max="20000" placeholder="—"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div id="actions">
+      <div id="size-summary">—</div>
+      <div class="btn-group">
+        <button class="btn btn-ghost" id="reset-btn">Reset</button>
+        <button class="btn btn-primary" id="download-btn">⬇ Download</button>
+      </div>
+    </div>
+
+  </div><!-- /workspace -->
+</div><!-- /card -->
+
+<div style="max-width:860px; margin: 0 auto; width:100%; flex:1;"></div>
+
+<div style="max-width:860px; margin:0 auto; width:100%;">
+  <footer class="site-footer">
+    <p class="footer-copy">© 2025 Toolbox</p>
+    <p class="footer-copy">Your image never leaves your device. <span>100% private.</span></p>
+  </footer>
+</div>
+
+<canvas id="hidden-canvas" style="display:none"></canvas>
+
+<script src="../scripts.js"></script>
+<script>
+  // ── State ──────────────────────────────────────────────────────
+  let origW = 0, origH = 0, aspectRatio = 1;
+  let locked = true;
+  let currentFile = null;
+
+  // ── Elements ───────────────────────────────────────────────────
+  const dropZone  = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const workspace = document.getElementById('workspace');
+  const origImg   = document.getElementById('original-img');
+  const origMeta  = document.getElementById('original-meta');
+  const outCanvas = document.getElementById('output-canvas');
+  const outMeta   = document.getElementById('output-meta');
+  const hidCanvas = document.getElementById('hidden-canvas');
+  const inpW      = document.getElementById('inp-w');
+  const inpH      = document.getElementById('inp-h');
+  const lockBtn   = document.getElementById('lock-btn');
+  const resetBtn  = document.getElementById('reset-btn');
+  const dlBtn     = document.getElementById('download-btn');
+  const summary   = document.getElementById('size-summary');
+
+  // ── Drop ───────────────────────────────────────────────────────
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+  // ── Load Image ─────────────────────────────────────────────────
+  function loadFile(file) {
+    currentFile = file;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        origW = img.naturalWidth;
+        origH = img.naturalHeight;
+        aspectRatio = origW / origH;
+        origImg.src = ev.target.result;
+        origMeta.innerHTML = `<strong>${origW} × ${origH}</strong> px &nbsp;·&nbsp; ${fmtBytes(file.size)}`;
+        inpW.value = origW;
+        inpH.value = origH;
+        clearActivePill();
+        dropZone.style.display = 'none';
+        workspace.style.display = 'block';
+        renderPreview();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Lock ───────────────────────────────────────────────────────
+  lockBtn.addEventListener('click', () => {
+    locked = !locked;
+    lockBtn.classList.toggle('locked', locked);
+    lockBtn.textContent = locked ? '🔒' : '🔓';
+    if (locked && inpW.value) {
+      inpH.value = Math.round(+inpW.value / aspectRatio) || '';
+      renderPreview();
+    }
+  });
+
+  // ── Inputs ─────────────────────────────────────────────────────
+  inpW.addEventListener('input', () => {
+    if (locked && inpW.value) inpH.value = Math.round(+inpW.value / aspectRatio) || '';
+    clearActivePill();
+    renderPreview();
+  });
+
+  inpH.addEventListener('input', () => {
+    if (locked && inpH.value) inpW.value = Math.round(+inpH.value * aspectRatio) || '';
+    clearActivePill();
+    renderPreview();
+  });
+
+  // ── Presets ────────────────────────────────────────────────────
+  document.querySelectorAll('.preset-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const w = +pill.dataset.w;
+      const h = +pill.dataset.h;
+      inpW.value = w;
+      inpH.value = h;
+      // Temporarily unlock so both dimensions are set freely
+      locked = false;
+      lockBtn.classList.remove('locked');
+      lockBtn.textContent = '🔓';
+      clearActivePill();
+      pill.classList.add('active');
+      renderPreview();
+    });
+  });
+
+  function clearActivePill() {
+    document.querySelectorAll('.preset-pill.active').forEach(p => p.classList.remove('active'));
+  }
+
+  // ── Render Preview ─────────────────────────────────────────────
+  function renderPreview() {
+    const w = parseInt(inpW.value) || origW;
+    const h = parseInt(inpH.value) || origH;
+    if (!origImg.src || !w || !h) return;
+
+    hidCanvas.width = w; hidCanvas.height = h;
+    const hCtx = hidCanvas.getContext('2d');
+    hCtx.clearRect(0, 0, w, h);
+    hCtx.drawImage(origImg, 0, 0, w, h);
+
+    const maxPrev = 320;
+    const scale = Math.min(maxPrev / w, maxPrev / h, 1);
+    outCanvas.width  = Math.round(w * scale);
+    outCanvas.height = Math.round(h * scale);
+    const pCtx = outCanvas.getContext('2d');
+    pCtx.clearRect(0, 0, outCanvas.width, outCanvas.height);
+    pCtx.drawImage(hidCanvas, 0, 0, outCanvas.width, outCanvas.height);
+
+    outMeta.innerHTML = `<strong>${w} × ${h}</strong> px`;
+
+    const sx = (w / origW * 100).toFixed(0);
+    const sy = (h / origH * 100).toFixed(0);
+    summary.innerHTML =
+      `<span>${origW} × ${origH}</span>` +
+      `<span class="arrow">→</span>` +
+      `<span class="new-dim">${w} × ${h}</span>&nbsp;` +
+      `<span style="color:var(--muted)">(${sx}% × ${sy}%)</span>`;
+  }
+
+  // ── Reset ──────────────────────────────────────────────────────
+  resetBtn.addEventListener('click', () => {
+    inpW.value = origW; inpH.value = origH;
+    locked = true;
+    lockBtn.classList.add('locked');
+    lockBtn.textContent = '🔒';
+    clearActivePill();
+    renderPreview();
+  });
+
+  // ── Download ───────────────────────────────────────────────────
+  dlBtn.addEventListener('click', () => {
+    if (!origImg.src) return;
+    const w = parseInt(inpW.value) || origW;
+    const h = parseInt(inpH.value) || origH;
+    hidCanvas.width = w; hidCanvas.height = h;
+    const ctx = hidCanvas.getContext('2d');
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(origImg, 0, 0, w, h);
+
+    const ext  = currentFile ? currentFile.name.split('.').pop().toLowerCase() : 'png';
+    const mime = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'webp' ? 'image/webp' : 'image/png';
+    const outExt = ext === 'jpg' || ext === 'jpeg' ? 'jpg' : ext === 'webp' ? 'webp' : 'png';
+    const base = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'image';
+    const a = document.createElement('a');
+    a.download = `${base}_${w}x${h}.${outExt}`;
+    a.href = hidCanvas.toDataURL(mime, 0.95);
+    a.click();
+
+    window.showToast('✓ Image downloaded!');
+    window.Toolbox.showResultAd();
+  });
+
+  // ── Helper ─────────────────────────────────────────────────────
+  function fmtBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  }
+</script>
+</body>
+</html>
